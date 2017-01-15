@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ECharts</title>
+<!-- 引入 echarts.js -->
+ <script type="text/javascript" src="js/echarts.js"></script>
+<script src="//cdn.bootcss.com/jquery/3.1.1/jquery.min.js"></script>
+    <script type="text/javascript" src="js/dataTool.min.js"></script>
+
+</head>
+<body>
+	<!-- 为ECharts准备一个具备大小（宽高）的Dom -->
+	<div id="main" style="width: 1200px; height: 600px;"></div>
+	<script type="text/javascript">
+		//app.title = '力引导布局';
+		// 基于准备好的dom，初始化echarts实例
+		var myChart = echarts.init(document.getElementById('main'));
+		myChart.showLoading();
+		$.get('resources/graph.gexf', function(xml) {
+			myChart.hideLoading();
+			var graph = echarts.dataTool.gexf.parse(xml);
+			var categories = [];
+			for (var i = 0; i < 9; i++) {
+				categories[i] = {
+					name : '类目' + i
+				};
+
+			}
+
+			graph.nodes.forEach(function(node) {
+				node.itemStyle = null;
+				node.symbolSize = 10;
+				node.value = node.symbolSize;
+				node.category = node.attributes.modularity_class;
+				// Use random x, y
+				node.x = node.y = null;
+				node.draggable = true;
+			});
+			var option = {
+				title : {
+					//text : 'Les Miserables',
+					subtext : 'Default layout',
+					top : 'bottom',
+					left : 'right'
+				},
+				 tooltip: {
+			            trigger: 'item',
+			            formatter: function (params) {//连接线上提示文字格式化
+			                if (params.data.source) {//注意判断，else是将节点的文字也初始化成想要的格式
+			                   return params.data.flow + '是【' + params.data.target.value + '】的居间人';
+			                }
+			                else {
+			                    return params.name;
+			                }
+			            }
+			        },
+				legend : [ {
+					// selectedMode: 'single',
+					data : categories.map(function(a) {
+						return a.name;
+					})
+				} ],
+				animation : false,
+				series : [ {
+					//name : 'Les Miserables',
+					type : 'graph',
+					layout : 'force',
+					data : graph.nodes,
+					links : graph.links,
+					categories : categories,
+					roam : true,
+					label : {
+						normal : {
+							position : 'right'
+						}
+					},
+					force : {
+						repulsion : 100
+					}
+				} ]
+			};
+			myChart.setOption(option);
+		}, 'xml');
+	</script>
+</body>
+</html>
